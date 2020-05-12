@@ -56,179 +56,249 @@ class SpheresGenerator extends Generator {
 	 * 
 	 * An array of planets made of different blocks.
 	 **/
+	//[ID,DATA,PercentSize]
+	//Array: Low number Index = bottom -- High number = Top of the sky
+	//Top of the array = bottom ...
 	protected $spheresBlocks = [
-		[
-			[Block::IRON_ORE, 0, 25],
-			[Block::STONE, 0, 75], 
+		//Bottom world
+		[//Bottom
+			[
+				[Block::DIAMOND_ORE, 0, 30],
+				[Block::OBSIDIAN, 0, 70],
+			],
+			[
+				[Block::GOLD_ORE, 0, 05],
+				[Block::STONE, 0, 95], 	
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::WOOD, 12, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::WOOD, 13, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::WOOD, 14, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::WOOD, 15, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::WOOD2, 12, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::WOOD2, 13, 95],
+			],		
+			[
+				[Block::DIAMOND_ORE, 0, 3],
+				[Block::SNOW_BLOCK, 0, 97],
+			],	
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::COBWEB, 0, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::WOOL, 0, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::WOOL, 1, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::WOOL, 3, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::WOOL, 4, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::WOOL, 0, 95],
+			],	
+			[
+				[Block::DIAMOND_ORE, 0, 7],
+				[Block::PACKED_ICE, 0, 93],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 3],
+				[Block::SLIME_BLOCK, 0, 97],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::QUARTZ_BLOCK, 0, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 2],
+				[Block::NETHERRACK, 0, 98],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::EMERALD_ORE, 0, 95],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 7],
+				[Block::REDSTONE_LAMP, 0, 90],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 10],
+				[Block::END_STONE, 0, 90],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 10],
+				[Block::NETHER_BRICK_BLOCK, 0, 90],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 10],
+				[Block::MELON_BLOCK, 0, 90],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 7],
+				[Block::GLOWSTONE, 0, 93],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 7],
+				[Block::PUMPKIN, 0, 93],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 10],
+				[Block::SOUL_SAND, 0, 90],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 10],
+				[Block::SPONGE, 0, 90],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 10],
+				[Block::PRISMARINE, 0, 90],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 10],
+				[Block::SEA_LANTERN, 0, 90],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 10],
+				[Block::NETHER_REACTOR, 0, 90],
+			],			
+		],
+		[//CENTER
+			[
+				[Block::REDSTONE_ORE, 0, 10],
+				[Block::STONE, 0, 90], 
 
-		],
-		[
-			[Block::COAL_ORE, 0, 25],
-			[Block::STONE, 0, 75], 
+			],
+			[
+				[Block::GOLD_ORE, 0, 7],
+				[Block::BOOKSHELF, 0, 90],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 7],
+				[Block::LAPIS_BLOCK, 0, 93],
+			],
+			[
+				[Block::DIAMOND_ORE, 0, 5],
+				[Block::REDSTONE_BLOCK, 0, 95],
+			],
 
+			[
+				[Block::IRON_ORE, 0, 5],
+				[Block::PLANKS, 0, 95],
+			],
+			[
+				[Block::COAL_ORE, 0, 5],
+				[Block::LEAVES, 4, 95],
+			],
+			[
+				[Block::NOTEBLOCK, 0, 100],
+			],
+			[
+				[Block::COBWEB, 0, 100],
+			],
+			[
+				[Block::COAL_ORE, 0, 10],
+				[Block::STONE_BRICK, 0, 90],
+			],
+			[
+				[Block::COAL_ORE, 0, 7],
+				[Block::GRAVEL, 0, 40],
+				[Block::STONE, 0, 50],
+			],
+			[
+				[Block::IRON_ORE, 0, 7],
+				[Block::SAND, 0, 40],
+				[Block::SANDSTONE, 0, 53],
+			],
 		],
-		[
-			[Block::GOLD_ORE, 0, 25],
-			[Block::STONE, 0, 75], 
+		[//TOP
+			[
+				[Block::IRON_ORE, 0, 10],
+				[Block::GRASS, 0, 90], 
 
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 7],
-			[Block::LAPIS_BLOCK, 0, 93],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::REDSTONE_BLOCK, 0, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::WOOD, 12, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::WOOD, 13, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::WOOD, 14, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::WOOD, 15, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::WOOD2, 12, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::WOOD2, 13, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::PLANKS, 0, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::LEAVES, 4, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 7],
-			[Block::NOTEBLOCK, 0, 93],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 3],
-			[Block::SNOW_BLOCK, 0, 97],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::COBWEB, 0, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::WOOL, 0, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::WOOL, 1, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::WOOL, 3, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::WOOL, 4, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::WOOL, 0, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 7],
-			[Block::BOOKSHELF, 0, 90],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 30],
-			[Block::OBSIDIAN, 0, 70],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 7],
-			[Block::STONE_BRICK, 0, 90],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 7],
-			[Block::GRAVEL, 0, 40],
-			[Block::STONE, 0, 50],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 7],
-			[Block::SAND, 0, 40],
-			[Block::SANDSTONE, 0, 53],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 7],
-			[Block::PACKED_ICE, 0, 93],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 3],
-			[Block::SLIME_BLOCK, 0, 97],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::QUARTZ_BLOCK, 0, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 2],
-			[Block::NETHERRACK, 0, 98],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 5],
-			[Block::EMERALD_ORE, 0, 95],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 7],
-			[Block::REDSTONE_LAMP, 0, 90],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 10],
-			[Block::END_STONE, 0, 90],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 10],
-			[Block::NETHER_BRICK_BLOCK, 0, 90],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 10],
-			[Block::MELON_BLOCK, 0, 90],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 7],
-			[Block::GLOWSTONE, 0, 93],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 7],
-			[Block::PUMPKIN, 0, 93],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 10],
-			[Block::SOUL_SAND, 0, 90],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 10],
-			[Block::SPONGE, 0, 90],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 10],
-			[Block::PRISMARINE, 0, 90],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 10],
-			[Block::SEA_LANTERN, 0, 90],
-		],
-		[
-			[Block::DIAMOND_ORE, 0, 10],
-			[Block::NETHER_REACTOR, 0, 90],
+			],
+			[
+				[Block::GOLD_ORE, 0, 5],
+				[Block::DIRT, 0, 95], 
+
+			],
+			[
+				[Block::COAL_ORE, 0, 15],
+				[Block::STONE, 0, 85], 
+
+			],
+			[
+				[Block::IRON_ORE, 0, 10],
+				[Block::COAL_ORE, 0, 10],
+				[Block::SNOW_BLOCK, 0, 80],
+			],
+			[
+				[Block::SNOW_BLOCK, 0, 100],
+			],
+			[
+				[Block::COBWEB, 0, 100],
+			],
+			[
+				[Block::IRON_ORE, 0, 5],
+				[Block::WOOL, 0, 95],
+			],
+			[
+				[Block::COAL_ORE, 0, 5],
+				[Block::WOOL, 1, 95],
+			],
+			[
+				[Block::GOLD_ORE, 0, 5],
+				[Block::COAL_ORE, 0, 5],
+				[Block::WOOL, 3, 90],
+			],
+			[
+				[Block::GOLD_ORE, 0, 5],
+				[Block::WOOL, 4, 95],
+			],
+			[
+				[Block::STONE, 0, 5],
+				[Block::WOOL, 0, 95],
+			],
+			[
+				[Block::STONE_BRICK, 0, 90],
+			],
+			[
+				[Block::GRAVEL, 0, 40],
+				[Block::STONE, 0, 50],
+			],
+			[
+				[Block::SAND, 0, 40],
+				[Block::SANDSTONE, 0, 53],
+			],
+			[
+				[Block::GOLD_ORE, 0, 3],
+				[Block::PACKED_ICE, 0, 97],
+			],
+
 		],
 	];
 	
@@ -335,7 +405,10 @@ class SpheresGenerator extends Generator {
 	 */
 	public function generatePlanet(Vector3 $center, int $radius){
 		$radiusSquared = $radius ** 2;
-		$currentSphereBlocks = $this->spheresBlocks[array_rand($this->spheresBlocks)];
+		$nbLevelBlock = count(array_keys($this->spheresBlocks));
+		$perFloorY = round(254/$nbLevelBlock);
+		$sphereFloor = floor($center->y/$perFloorY);
+		$currentSphereBlocks = $this->spheresBlocks[$sphereFloor][array_rand($this->spheresBlocks[$sphereFloor])];
 		for ($x = $center->x - $radius; $x <= $center->x + $radius; $x++) {
 			$xsquared = ($center->x - $x) * ($center->x - $x);
 			for ($y = $center->y - $radius; $y <= $center->y + $radius; $y++) {
@@ -345,15 +418,18 @@ class SpheresGenerator extends Generator {
 					if($xsquared + $ysquared + $zsquared < $radiusSquared) {
 						// Choosing a random block to place
 						$rand = $this->random->nextBoundedInt(100) + 1;
+						$previousRand = 0;
 						foreach($currentSphereBlocks as $block){
-							if($rand > $block[2]) {
-								$rand = $block[2];
-								continue;
-							} else {
-								$this->level->setBlockIdAt($x, $y, $z, $block[0], false, false);
-								$this->level->setBlockDataAt($x, $y, $z, $block[1], false, false);
+							$blockChance = $block[2];
+							$blockData = $block[1];
+							$blockID = $block[0];
+							$rand -= $previousRand;
+							if($rand <= $blockChance) {
+								$this->level->setBlockIdAt($x, $y, $z, $blockID, false, false);
+								$this->level->setBlockDataAt($x, $y, $z, $blockData, false, false);
 								break;
 							}
+							else $previousRand = $blockChance;
 						}
 					}
 				}
