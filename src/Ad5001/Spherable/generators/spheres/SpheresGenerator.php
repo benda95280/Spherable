@@ -371,18 +371,19 @@ class SpheresGenerator extends Generator {
 		$this->random->setSeed(0xdeadbeef ^ ($chunkX << 8) ^ $chunkZ ^ $this->level->getSeed());
 		$chunk = $this->level->getChunk($chunkX, $chunkZ);
 		$count = $this->random->nextRange(1, 4);
+		$isFlat = ($this->random->nextRange(0, 2) == 0);
 		for($i = 0; $i <= $count; $i++){
 			$y = $this->random->nextRange(17, Level::Y_MAX - 25);
-			$maxRadius = $y % 10;
+			$maxRadius = $y / 20;
 			if($maxRadius < 6) $maxRadius = 6;
-			// $maxRadius is situated between 12 and 20 depending on Y choosen
+			// $maxRadius is situated between 6 and 12.8 depending on Y choosen
 			// Let's add a little bit more random
 			$radius = $this->random->nextRange(5, (int) round($maxRadius));
 			// Generating planet
 			$x = $chunkX * 16 + $this->random->nextRange(0, 15);
 			$z = $chunkZ * 16 + $this->random->nextRange(0, 15);
 			$center = new Vector3($x, $y, $z);
-			$this->generatePlanet($center, $radius);
+			$this->generatePlanet($center, $radius, $isFlat);
 		}
 	}
 
@@ -403,7 +404,7 @@ class SpheresGenerator extends Generator {
 	 * @param int $radius
 	 * @return void
 	 */
-	public function generatePlanet(Vector3 $center, int $radius){
+	public function generatePlanet(Vector3 $center, int $radius, $isFlat){
 		$radiusSquared = $radius ** 2;
 		$nbLevelBlock = count(array_keys($this->spheresBlocks));
 		$perFloorY = round(254/$nbLevelBlock);
@@ -411,11 +412,22 @@ class SpheresGenerator extends Generator {
 		$currentSphereBlocks = $this->spheresBlocks[$sphereFloor][array_rand($this->spheresBlocks[$sphereFloor])];
 		for ($x = $center->x - $radius; $x <= $center->x + $radius; $x++) {
 			$xsquared = ($center->x - $x) * ($center->x - $x);
-			for ($y = $center->y - $radius; $y <= $center->y + $radius; $y++) {
+			for ($y = $center->y - $radius; $y <= $center->y + $radius; $y++) {				
 				$ysquared = ($center->y - $y) * ($center->y - $y);
 				for ($z = $center->z - $radius; $z <= $center->z + $radius; $z++) {
 					$zsquared = ($center->z - $z) * ($center->z - $z);
 					if($xsquared + $ysquared + $zsquared < $radiusSquared) {
+						//Continue if we are over Y of the center, to generate flat island
+						if ($isFlat && $y > $center->y) {
+							$radiusSquaredBorder = ($radius-1) ** 2;
+							//TODO: Find why second condition is needed for top block not set
+							if ($xsquared + $ysquared + $zsquared > $radiusSquaredBorder OR $y == $center->y + $radius - 1) {
+								$this->level->setBlockIdAt($x, $y, $z, 20, false, false);
+								$this->level->setBlockDataAt($x, $y, $z, 0, false, false);								
+							}
+							continue;
+						}
+
 						// Choosing a random block to place
 						$rand = $this->random->nextBoundedInt(100) + 1;
 						$previousRand = 0;
