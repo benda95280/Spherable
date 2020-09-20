@@ -406,10 +406,9 @@ class SpheresGenerator extends Generator {
 	 */
 	public function generatePlanet(Vector3 $center, int $radius, $isFlat){
 		$radiusSquared = $radius ** 2;
-		$nbLevelBlock = count(array_keys($this->spheresBlocks));
-		$perFloorY = round(254/$nbLevelBlock);
-		$sphereFloor = floor($center->y/$perFloorY);
-		$currentSphereBlocks = $this->spheresBlocks[$sphereFloor][array_rand($this->spheresBlocks[$sphereFloor])];
+		
+		$canSpawn = True;
+		//Detect if island do not ovveride another island
 		for ($x = $center->x - $radius; $x <= $center->x + $radius; $x++) {
 			$xsquared = ($center->x - $x) * ($center->x - $x);
 			for ($y = $center->y - $radius; $y <= $center->y + $radius; $y++) {				
@@ -417,31 +416,54 @@ class SpheresGenerator extends Generator {
 				for ($z = $center->z - $radius; $z <= $center->z + $radius; $z++) {
 					$zsquared = ($center->z - $z) * ($center->z - $z);
 					if($xsquared + $ysquared + $zsquared < $radiusSquared) {
-						//Continue if we are over Y of the center, to generate flat island
-						if ($isFlat && $y > $center->y) {
-							$radiusSquaredBorder = ($radius-1) ** 2;
-							//TODO: Find why second condition is needed for top block not set
-							if ($xsquared + $ysquared + $zsquared > $radiusSquaredBorder OR $y == $center->y + $radius - 1) {
-								$this->level->setBlockIdAt($x, $y, $z, 20, false, false);
-								$this->level->setBlockDataAt($x, $y, $z, 0, false, false);								
-							}
-							continue;
+						if ($this->level->getBlockIdAt($x, $y, $z) != 0) {
+							$canSpawn = False;
+							break 3;
 						}
-
-						// Choosing a random block to place
-						$rand = $this->random->nextBoundedInt(100) + 1;
-						$previousRand = 0;
-						foreach($currentSphereBlocks as $block){
-							$blockChance = $block[2];
-							$blockData = $block[1];
-							$blockID = $block[0];
-							$rand -= $previousRand;
-							if($rand <= $blockChance) {
-								$this->level->setBlockIdAt($x, $y, $z, $blockID, false, false);
-								$this->level->setBlockDataAt($x, $y, $z, $blockData, false, false);
-								break;
+					}
+				}
+			}
+		}		
+		
+		
+		if ($canSpawn) {
+			$nbLevelBlock = count(array_keys($this->spheresBlocks));
+			$perFloorY = round(254/$nbLevelBlock);
+			$sphereFloor = floor($center->y/$perFloorY);
+			$currentSphereBlocks = $this->spheresBlocks[$sphereFloor][array_rand($this->spheresBlocks[$sphereFloor])];
+			for ($x = $center->x - $radius; $x <= $center->x + $radius; $x++) {
+				$xsquared = ($center->x - $x) * ($center->x - $x);
+				for ($y = $center->y - $radius; $y <= $center->y + $radius; $y++) {				
+					$ysquared = ($center->y - $y) * ($center->y - $y);
+					for ($z = $center->z - $radius; $z <= $center->z + $radius; $z++) {
+						$zsquared = ($center->z - $z) * ($center->z - $z);
+						if($xsquared + $ysquared + $zsquared < $radiusSquared) {
+							//Continue if we are over Y of the center, to generate flat island
+							if ($isFlat && $y > $center->y) {
+								$radiusSquaredBorder = ($radius-1) ** 2;
+								//TODO: Find why second condition is needed for top block not set
+								if ($xsquared + $ysquared + $zsquared > $radiusSquaredBorder OR $y == $center->y + $radius - 1) {
+									$this->level->setBlockIdAt($x, $y, $z, 20, false, false);
+									$this->level->setBlockDataAt($x, $y, $z, 0, false, false);								
+								}
+								continue;
 							}
-							else $previousRand = $blockChance;
+
+							// Choosing a random block to place
+							$rand = $this->random->nextBoundedInt(100) + 1;
+							$previousRand = 0;
+							foreach($currentSphereBlocks as $block){
+								$blockChance = $block[2];
+								$blockData = $block[1];
+								$blockID = $block[0];
+								$rand -= $previousRand;
+								if($rand <= $blockChance) {
+									$this->level->setBlockIdAt($x, $y, $z, $blockID, false, false);
+									$this->level->setBlockDataAt($x, $y, $z, $blockData, false, false);
+									break;
+								}
+								else $previousRand = $blockChance;
+							}
 						}
 					}
 				}
