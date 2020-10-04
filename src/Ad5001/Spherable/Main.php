@@ -30,6 +30,7 @@ use pocketmine\Server;
 use pocketmine\Player;
 use pocketmine\level\Position;
 use pocketmine\event\player\PlayerMoveEvent;
+use pocketmine\event\player\PlayerInteractEvent;
 use pocketmine\event\block\BlockPlaceEvent;
 use pocketmine\entity\Effect;
 use pocketmine\math\Vector3;
@@ -39,7 +40,7 @@ use pocketmine\entity\projectile\Arrow;
 
 
 
-
+use Ad5001\Spherable\schematics\Schematics;
 use Ad5001\Spherable\generators\spheres\SpheresGenerator;
 use Ad5001\Spherable\commands\sphgenCommand;
 
@@ -236,6 +237,31 @@ class Main extends PluginBase implements Listener{
 	public function onJoin(\pocketmine\event\player\PlayerJoinEvent $event){
 		if($event->getPlayer()->getLevel()->getProvider()->getGenerator() == "spheres"){
 			$event->getPlayer()->setSpawn(new Position(264, 255, 264, $event->getPlayer()->getLevel()));
+		}
+	}
+	
+    public function onInteract(PlayerInteractEvent $event) : void{
+		if($event->getAction() !== PlayerInteractEvent::RIGHT_CLICK_BLOCK) return;
+		
+        if($event->getBlock()->getLevel()->getProvider()->getGenerator() == "spheres") {
+			$block = $event->getBlock();
+			if ($block->getId() == 208) {
+				$player = $event->getPlayer();
+				$level = $block->getLevel();
+				$directory = (dirname(__FILE__,1).DIRECTORY_SEPARATOR.'schematics'.DIRECTORY_SEPARATOR);
+				$file = "house.schematic";
+				$filePath = $directory.$file;
+				try {
+					$schematic = new Schematics($filePath);
+					$schematic->load();
+				} catch (\Throwable $error) {
+					// Handle error
+					var_dump("Problem while loading schematic ($filePath): ".$error);
+				}
+				finally {
+					$schematic->paste($level,$block);
+				}
+			}
 		}
 	}
 	

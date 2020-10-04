@@ -13,7 +13,7 @@
  * @license NTOSL (View LICENSE.md)
  * @package Spherical
  * @version 1.0.0
- * @link https://download.ad5001.eu/en/view.php?name=Spherable&src=github
+ * @link https://download.ad5001.eu/en/view.php?name=Spherable&src=github                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 
  */
 declare(strict_types = 1);
 
@@ -39,6 +39,8 @@ use pocketmine\level\ChunkManager;
 use pocketmine\level\Level;
 use pocketmine\math\Vector3;
 use pocketmine\utils\Random;
+use Ad5001\Spherable\schematics\Schematics;
+
 
 class SpheresGenerator extends Generator {
     	
@@ -46,6 +48,12 @@ class SpheresGenerator extends Generator {
 	
 	/** @var Level */
 	protected $level;
+	
+	/** @var Plugin */
+	protected $plugin;
+	
+	/** @var Array */
+	protected $blockCache;
 	
 	
 	/** @var Random */
@@ -313,8 +321,34 @@ class SpheresGenerator extends Generator {
 	 * @return		void
 	 */
 	public function init(ChunkManager $level, Random $random): void {
+		//parent::init($level, $random);
 		$this->level = $level;
 		$this->random = $random;
+		$this->blockCache = [];
+				
+		//create spawn
+		if ($this->level->getChunk(16, 16) == null OR !$this->level->getChunk(16, 16)->isGenerated()) {
+			var_dump("STARTED SPAWN GENERATION !!");
+			$directory = (dirname(__FILE__,3).DIRECTORY_SEPARATOR.'schematics'.DIRECTORY_SEPARATOR);
+			$file = "spawn.schematic";
+			$filePath = $directory.$file;
+			try {
+				$schematic = new Schematics($filePath);
+				$schematic->load();
+			} catch (\Throwable $error) {
+				// Handle error
+				var_dump("Problem while loading schematic ($filePath): ".$error);
+			}
+			finally {
+				// $schematic->paste( $this->level, new Vector3(($chunkX * 16)+8-$schematic->getWidth(), 127-$schematic->getHeight(), ($chunkZ * 16)+8-$schematic->getLength() ));
+				$blocksToPlace = $schematic->getBlock(new Vector3((16 * 16)-$schematic->getWidth(), Level::Y_MAX-$schematic->getHeight(), (16 * 16)-$schematic->getLength() ));
+				$this->blockCache = array_merge($this->blockCache, $blocksToPlace);
+				var_dump($schematic->getHeight());
+			}
+			var_dump("FINISHED SPAWN GENERATION !!");
+		}
+		
+		// $this->plugin = $level->getServer()->getPluginManager()->getPlugin("Spherable");
 		foreach ($this->spheresBlocks as $sphereLvl) {
 			foreach ($sphereLvl as $sphereBlockList) {
 				$chanceCount = 0;
@@ -325,8 +359,7 @@ class SpheresGenerator extends Generator {
 				}
 				if ($chanceCount != 100) var_dump("Problems with :".trim($BlocksName)." - Because chance is: ".$chanceCount);
 			}
-		}
-		
+		}		
 	}
 	
 	
@@ -361,13 +394,76 @@ class SpheresGenerator extends Generator {
 	 */
 	public function generateChunk(int $chunkX, int $chunkZ): void{
 		// Leave blank, planets will be generated later
+		var_dump("GENERATING CHUNK ! ($chunkX - $chunkZ)");
+		
+        $x1 = $chunkX << 4;
+        $z2 = $chunkZ << 4;
+		$p=0;
+		$np=0;
+		$lastFenceColumn = 0;
+		
+		//Check if there is block in cache to place !
+        for ($xx = $x1; $xx < $x1 + 16; $xx ++) {
+            for ($zz = $z2; $zz < $z2 + 16; $zz ++) {
+                for ($y = 0; $y < 256; $y++) {
+                    // if (in_array($xx . ':' . $y . ':' . $zz, $this->blockCache)) {
+                    if (isset($this->blockCache[$xx . ':' . $y . ':' . $zz])) {
+						$blockCacheToPlace = $this->blockCache[$xx . ':' . $y . ':' . $zz];
+						$blockCacheToPlace = explode(':', $blockCacheToPlace);
+						$id = $blockCacheToPlace[0];
+						$meta = $blockCacheToPlace[1];
+							settype($id, "integer");
+							settype($meta, "integer");
+						$this->level->setBlockIdAt($xx, $y, $zz, $id);
+						$this->level->setBlockDataAt($xx, $y, $zz, $meta);
+						unset($this->blockCache[$xx . ':' . $y . ':' . $zz]);
+						$p++;
+                    }
+					else $np++;
+					
+					
+					//We can Draw the bridges ?
+					if ($y == 120 OR $y == 20 OR $y == 240) {
+						//Set Border
+						if ($this->positionIsBetweenRadius (new Vector3(0, 0, 0), 600, 601, new Vector3($xx, $y, $zz)) OR $this->positionIsBetweenRadius (new Vector3(0, 0, 0), 609, 610, new Vector3($xx, $y, $zz))) {
+							$this->level->setBlockIdAt($xx, $y+1, $zz, 85);
+							$this->level->setBlockDataAt($xx, $y+1, $zz, 0);
+							$this->level->setBlockIdAt($xx, $y, $zz, 5);
+							$this->level->setBlockDataAt($xx, $y, $zz, 1);
+							$lastFenceColumn++;
+							
+							if ($lastFenceColumn == 5) {
+									$this->level->setBlockIdAt($xx, $y+2, $zz, 50);
+									$this->level->setBlockDataAt($xx, $y+2, $zz, 0);								
+							}
+							if ($lastFenceColumn >= 10 ) {
+								for ($i = 0; $i <= 4; $i++) {
+									$this->level->setBlockIdAt($xx, $y+2+$i, $zz, 85);
+									$this->level->setBlockDataAt($xx, $y+2+$i, $zz, 0);
+								}
+								$lastFenceColumn = 0;
+							}
+							$this->level->setBlockIdAt($xx, $y+7, $zz, 158);
+							$this->level->setBlockDataAt($xx, $y+7, $zz, 0);									
+						}
+						//Set Center
+						elseif ($this->positionIsBetweenRadius (new Vector3(0, 0, 0), 601, 609, new Vector3($xx, $y, $zz))) {
+							if ($this->random->nextRange(0, 200) != 0) {
+								$this->level->setBlockIdAt($xx, $y-1, $zz, 5);
+								$this->level->setBlockDataAt($xx, $y-1, $zz, 1);
+							}
+							if ($this->random->nextRange(0, 200) != 0) {
+								$this->level->setBlockIdAt($xx, $y+8, $zz, 157);
+								$this->level->setBlockDataAt($xx, $y+8, $zz, 0);
+							}								
+						}
+					}
+                }
+            }
+        }
+		var_dump("GENERATING CHUNK ($chunkX - $chunkZ) HAVE FINISHED / CHECK BLOCK TO PLACE (P:$p -- NP:$np)");
+
 		$chunk = $this->level->getChunk($chunkX, $chunkZ);
-		for($x = 0; $x < 16; $x++) {
-			for($z = 0; $z < 16; $z++) {
-				$chunk->setBiomeId($x, $z, 1);
-				if($chunkX == 16 && $chunkZ == 16) $chunk->setBlockId($x, 254, $z, 2);
-			}
-		}
 		$chunk->setGenerated();
 	}
 	
@@ -380,18 +476,25 @@ class SpheresGenerator extends Generator {
 	 * @return void
 	 */
 	public function populateChunk(int $chunkX, int $chunkZ): void{
+		var_dump("POPULATE CHUNK ! ($chunkX - $chunkZ)");
+		
 		$options = [];
 		$this->random->setSeed(0xdeadbeef ^ ($chunkX << 8) ^ $chunkZ ^ $this->level->getSeed());
-		$chunk = $this->level->getChunk($chunkX, $chunkZ);
-		$count = $this->random->nextRange(1, 4);
-		$options["isFlat"] = $this->random->nextRange(0, 2) == 0;
-		$options["underGroundNoise"] = $this->random->nextRange(0, 2) == 0;
-		$options["borderNoise"] = $this->random->nextRange(0, 1) == 0;
+		$count = $this->random->nextRange(0, 2);
 
 		for($i = 0; $i <= $count; $i++){
 			$y = $this->random->nextRange(17, Level::Y_MAX - 25);
-			$maxRadius = $y / 16;
-			if($maxRadius < 6) $maxRadius = 6;
+			$options["isFlat"] = $this->random->nextRange(0, 2) == 0;
+			$options["underGroundNoise"] = $this->random->nextRange(0, 2) == 0;
+			$options["borderNoise"] = $this->random->nextRange(0, 1) == 0;
+			$options["mystic"] = $this->random->nextRange(0, 200) == 0;
+			
+			if     ($chunkX % 11 == 0 OR $chunkZ % 11 == 0) $maxRadius = $y / 8;
+			elseif ($chunkX % 5 == 0 OR $chunkZ % 5 == 0) $maxRadius = $y / 10;
+			elseif ($chunkX % 3 == 0 OR $chunkZ % 3 == 0) $maxRadius = $y / 13;
+			else    $maxRadius = $y / 16;
+			
+			if ($maxRadius < 6) $maxRadius = 6;
 			// $maxRadius is situated between 6 and 12.8 depending on Y choosen
 			// Let's add a little bit more random
 			$radius = $this->random->nextRange(5, (int) round($maxRadius));
@@ -399,17 +502,23 @@ class SpheresGenerator extends Generator {
 			$x = $chunkX * 16 + $this->random->nextRange(0, 15);
 			$z = $chunkZ * 16 + $this->random->nextRange(0, 15);
 			$center = new Vector3($x, $y, $z);
-			$this->generatePlanet($center, $radius, $options);
+			if ($this->generatePlanet($center, $radius, $options)) {
+				// $plugin = $this->getServer()->getPluginManager()->getPlugin("Spherable");
+				// $plugin->
+			}
+			else {
+				var_dump("Planet not generated");
+			}	
 		}
 	}
 
 	/**
 	 * Returns the dafault spawn
 	 *
-	 * @return void
+	 * @return Vector3
 	 */
 	public function getSpawn() : Vector3{
-		return new Vector3(264, 255, 264);
+		return new Vector3(264, 127, 264);
 	}
 
 	/**
@@ -422,160 +531,180 @@ class SpheresGenerator extends Generator {
 	 */
 	public function generatePlanet(Vector3 $center, int $radius, $options){
 		$radiusSquared = $radius ** 2;
+		$GlassColor = $this->random->nextRange(0, 15);
+		$canSpawn = True;		
 		
-		$canSpawn = True;
 		//Detect if island do not ovveride another island
-		for ($x = $center->x - $radius; $x <= $center->x + $radius; $x++) {
+		$radiusCanSpawn = $radius + 7; 
+		$radiusSquaredCanSpawn = $radiusCanSpawn ** 2;
+		for ($x = $center->x - $radiusCanSpawn; $x <= $center->x + $radiusCanSpawn; $x++) {
 			$xsquared = ($center->x - $x) * ($center->x - $x);
-			for ($y = $center->y - $radius; $y <= $center->y + $radius; $y++) {				
+			for ($y = $center->y - $radiusCanSpawn; $y <= $center->y + $radiusCanSpawn; $y++) {				
 				$ysquared = ($center->y - $y) * ($center->y - $y);
-				for ($z = $center->z - $radius; $z <= $center->z + $radius; $z++) {
+				for ($z = $center->z - $radiusCanSpawn; $z <= $center->z + $radiusCanSpawn; $z++) {
 					$zsquared = ($center->z - $z) * ($center->z - $z);
-					if($xsquared + $ysquared + $zsquared < $radiusSquared) {
-						if ($this->level->getBlockIdAt($x, $y, $z) != 0) {
+					if($xsquared + $ysquared + $zsquared < $radiusSquaredCanSpawn) {
+						if ($this->level->getBlockIdAt($x, $y, $z) != 0 || isset($this->blockCache[$x . ':' . $y . ':' . $z])) {
 							$canSpawn = False;
 							break 3;
 						}
 					}
 				}
 			}
-		}		
+		}
 		
-		$GlassColor = $this->random->nextRange(0, 15);
 		if ($canSpawn) {
-			$nbLevelBlock = count(array_keys($this->spheresBlocks));
-			$perFloorY = round(254/$nbLevelBlock);
-			$sphereFloor = floor($center->y/$perFloorY);
-			$currentSphereBlocks = $this->spheresBlocks[$sphereFloor][array_rand($this->spheresBlocks[$sphereFloor])];
-			for ($x = $center->x - $radius; $x <= $center->x + $radius; $x++) {
-				$xsquared = ($center->x - $x) * ($center->x - $x);
-				for ($y = $center->y - $radius; $y <= $center->y + $radius; $y++) {				
-					$ysquared = ($center->y - $y) * ($center->y - $y);
-					for ($z = $center->z - $radius; $z <= $center->z + $radius; $z++) {
-						$zsquared = ($center->z - $z) * ($center->z - $z);
-						if($xsquared + $ysquared + $zsquared < $radiusSquared) {
-							// FLAT ISLAND //
-							// #Generate random hole in surface
-							if ($options["isFlat"] && $y == $center->y && $xsquared + $ysquared + $zsquared < ($radius-1) ** 2) {
-								if ($this->random->nextRange(0, 15) == 15) continue; 
-							}
-							// #Generation of bubble
-							if ($options["isFlat"] && $y > $center->y) {
-								$radiusSquaredBorder = ($radius-1) ** 2;
-								//TODO: Find why second condition is needed for top block not set
-								if ($xsquared + $ysquared + $zsquared > $radiusSquaredBorder OR $y == $center->y + $radius - 1) {
-									//IF BorderNoise and Y+1 (First border of glass)
-									if ($options["borderNoise"] && $y == ($center->y + 1) && $radius >= 7) {
-										$borderNoise = $this->random->nextRange(0, 10);
-										
-										if ($borderNoise <= 4) {
-											$this->level->setBlockIdAt($x, $y, $z, 241, false, false);
-											$this->level->setBlockDataAt($x, $y, $z, $GlassColor, false, false);
-										}										
-										elseif ($borderNoise <= 7) {
+			
+			//Spawn Mystic island
+			if ($options["mystic"]) {
+				$this->level->setBlockIdAt($center->x, $center->y, $center->z, 208);
+				$this->level->setBlockDataAt($center->x, $center->y, $center->z, 0);
+				
+				$this->level->setBlockIdAt($center->x+1, $center->y, $center->z, 241);
+				$this->level->setBlockDataAt($center->x+1, $center->y, $center->z, $GlassColor);
+				$this->level->setBlockIdAt($center->x-1, $center->y, $center->z, 241);
+				$this->level->setBlockDataAt($center->x-1, $center->y, $center->z, $GlassColor);
+				$this->level->setBlockIdAt($center->x, $center->y, $center->z-1, 241);
+				$this->level->setBlockDataAt($center->x, $center->y, $center->z-1, $GlassColor);
+				$this->level->setBlockIdAt($center->x, $center->y, $center->z+1, 241);
+				$this->level->setBlockDataAt($center->x, $center->y, $center->z+1, $GlassColor);
+			}		
+			//Spawn an island
+			else {
+				$nbLevelBlock = count(array_keys($this->spheresBlocks));
+				$perFloorY = round(254/$nbLevelBlock);
+				$sphereFloor = floor($center->y/$perFloorY);
+				$currentSphereBlocks = $this->spheresBlocks[$sphereFloor][array_rand($this->spheresBlocks[$sphereFloor])];
+				for ($x = $center->x - $radius; $x <= $center->x + $radius; $x++) {
+					$xsquared = ($center->x - $x) * ($center->x - $x);
+					for ($y = $center->y - $radius; $y <= $center->y + $radius; $y++) {				
+						$ysquared = ($center->y - $y) * ($center->y - $y);
+						for ($z = $center->z - $radius; $z <= $center->z + $radius; $z++) {
+							$zsquared = ($center->z - $z) * ($center->z - $z);
+							if($xsquared + $ysquared + $zsquared < $radiusSquared) {
+								// FLAT ISLAND //
+								// #Generate random hole in surface
+								if ($options["isFlat"] && $y == $center->y && $xsquared + $ysquared + $zsquared < ($radius-1) ** 2) {
+									if ($this->random->nextRange(0, 15) == 15) continue; 
+								}
+								// #Generation of bubble
+								if ($options["isFlat"] && $y > $center->y) {
+									$radiusSquaredBorder = ($radius-1) ** 2;
+									//TODO: Find why second condition is needed for top block not set
+									if ($xsquared + $ysquared + $zsquared > $radiusSquaredBorder OR $y == $center->y + $radius - 1) {
+										//IF BorderNoise and Y+1 (First border of glass)
+										if ($options["borderNoise"] && $y == ($center->y + 1) && $radius >= 7) {
+											$borderNoise = $this->random->nextRange(0, 10);
+											
+											if ($borderNoise <= 4) {
+												$this->level->setBlockIdAt($x, $y, $z, 241);
+												$this->level->setBlockDataAt($x, $y, $z, $GlassColor);
+											}										
+											elseif ($borderNoise <= 7) {
+												$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
+												$this->level->setBlockIdAt($x, $y, $z, $randomBlock["blockID"]);
+												$this->level->setBlockDataAt($x, $y, $z, $randomBlock["blockData"]);
+												
+											}
+											elseif ($borderNoise <= 9) {
+												$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
+												$this->level->setBlockIdAt($x, $y, $z, $randomBlock["blockID"]);
+												$this->level->setBlockDataAt($x, $y, $z, $randomBlock["blockData"]);
+												$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
+												$this->level->setBlockIdAt($x, $y+1, $z, $randomBlock["blockID"]);
+												$this->level->setBlockDataAt($x, $y+1, $z, $randomBlock["blockData"]);
+											}
+											else {
+												$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
+												$this->level->setBlockIdAt($x, $y, $z, $randomBlock["blockID"]);
+												$this->level->setBlockDataAt($x, $y, $z, $randomBlock["blockData"]);
+												$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
+												$this->level->setBlockIdAt($x, $y+1, $z, $randomBlock["blockID"]);
+												$this->level->setBlockDataAt($x, $y+1, $z, $randomBlock["blockData"]);
+												$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
+												$this->level->setBlockIdAt($x, $y+2, $z, $randomBlock["blockID"]);
+												$this->level->setBlockDataAt($x, $y+2, $z, $randomBlock["blockData"]);										
+											}
+										}
+										//#Else no borderNoise (bubble) and no block already set
+										elseif ($this->level->getBlockIdAt($x, $y, $z) == 0) {
+											$this->level->setBlockIdAt($x, $y, $z, 241);
+											$this->level->setBlockDataAt($x, $y, $z, $GlassColor);
+										}
+									}
+									//#Inside bubble, add some noise block on Y+1 if no air under
+									elseif ($xsquared + $ysquared + $zsquared < $radiusSquaredBorder && $y == ($center->y + 1)) {
+										if ($this->level->getBlockIdAt($x, $y-1, $z) != 0 && ($this->random->nextRange(0, 60) >= 59)) {
 											$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-											$this->level->setBlockIdAt($x, $y, $z, $randomBlock["blockID"], false, false);
-											$this->level->setBlockDataAt($x, $y, $z, $randomBlock["blockData"], false, false);
+											$this->level->setBlockIdAt($x, $y, $z, $randomBlock["blockID"]);
+											$this->level->setBlockDataAt($x, $y, $z, $randomBlock["blockData"]);										
 											
 										}
-										elseif ($borderNoise <= 9) {
+									}
+								continue;
+								}
+								
+								// SPHERE ISLAND //
+								// Choosing a random block to place
+								$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
+								$this->level->setBlockIdAt($x, $y, $z, $randomBlock["blockID"]);
+								$this->level->setBlockDataAt($x, $y, $z, $randomBlock["blockData"]);
+								
+								
+							
+								//ADD Underground Noise
+								//If current block is under middle(Y) AND is the last block on the radius
+								//TODO: Find why second condition is needed for top block not set
+								if ($options["underGroundNoise"] AND $y < $center->y AND ($xsquared + $ysquared + $zsquared > ($radius-1) ** 2 OR $y == $center->y - $radius - 1)) {
+									//Is there any block at y-3 arround ?
+									if ($this->level->getBlockIdAt($x+1, $y-3, $z) != 0 OR $this->level->getBlockIdAt($x-1, $y-3, $z) != 0 OR $this->level->getBlockIdAt($x, $y-3, $z+1) != 0 OR $this->level->getBlockIdAt($x, $y-3, $z-1) != 0) {
+										$randThirdBlock = $this->random->nextRange(0, 1);
+										if ($randThirdBlock == 0) {
+											//Add one block
 											$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-											$this->level->setBlockIdAt($x, $y, $z, $randomBlock["blockID"], false, false);
-											$this->level->setBlockDataAt($x, $y, $z, $randomBlock["blockData"], false, false);
-											$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-											$this->level->setBlockIdAt($x, $y+1, $z, $randomBlock["blockID"], false, false);
-											$this->level->setBlockDataAt($x, $y+1, $z, $randomBlock["blockData"], false, false);
+											$this->level->setBlockIdAt($x, $y-1, $z, $randomBlock["blockID"]);
+											$this->level->setBlockDataAt($x, $y-1, $z, $randomBlock["blockData"]);
 										}
 										else {
+											//Add two block
 											$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-											$this->level->setBlockIdAt($x, $y, $z, $randomBlock["blockID"], false, false);
-											$this->level->setBlockDataAt($x, $y, $z, $randomBlock["blockData"], false, false);
+											$this->level->setBlockIdAt($x, $y-1, $z, $randomBlock["blockID"]);
+											$this->level->setBlockDataAt($x, $y-1, $z, $randomBlock["blockData"]);
 											$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-											$this->level->setBlockIdAt($x, $y+1, $z, $randomBlock["blockID"], false, false);
-											$this->level->setBlockDataAt($x, $y+1, $z, $randomBlock["blockData"], false, false);
-											$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-											$this->level->setBlockIdAt($x, $y+2, $z, $randomBlock["blockID"], false, false);
-											$this->level->setBlockDataAt($x, $y+2, $z, $randomBlock["blockData"], false, false);										
+											$this->level->setBlockIdAt($x, $y-2, $z, $randomBlock["blockID"]);
+											$this->level->setBlockDataAt($x, $y-2, $z, $randomBlock["blockData"]);
 										}
 									}
-									//#Else no borderNoise (bubble) and no block already set
-									elseif ($this->level->getBlockIdAt($x, $y, $z) == 0) {
-										$this->level->setBlockIdAt($x, $y, $z, 241, false, false);
-										$this->level->setBlockDataAt($x, $y, $z, $GlassColor, false, false);
-									}
-								}
-								//#Inside bubble, add some noise block on Y+1 if no air under
-								elseif ($xsquared + $ysquared + $zsquared < $radiusSquaredBorder && $y == ($center->y + 1)) {
-									if ($this->level->getBlockIdAt($x, $y-1, $z) != 0 && ($this->random->nextRange(0, 60) >= 59)) {
-										$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-										$this->level->setBlockIdAt($x, $y, $z, $randomBlock["blockID"], false, false);
-										$this->level->setBlockDataAt($x, $y, $z, $randomBlock["blockData"], false, false);										
-										
-									}
-								}
-							continue;
-							}
-							
-							// SPHERE ISLAND //
-							// Choosing a random block to place
-							$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-							$this->level->setBlockIdAt($x, $y, $z, $randomBlock["blockID"], false, false);
-							$this->level->setBlockDataAt($x, $y, $z, $randomBlock["blockData"], false, false);
-							
-							
-						
-							//ADD Underground Noise
-							//If current block is under middle(Y) AND is the last block on the radius
-							//TODO: Find why second condition is needed for top block not set
-							if ($options["underGroundNoise"] AND $y < $center->y AND ($xsquared + $ysquared + $zsquared > ($radius-1) ** 2 OR $y == $center->y - $radius - 1)) {
-								//Is there any block at y-3 arround ?
-								if ($this->level->getBlockIdAt($x+1, $y-3, $z) != 0 OR $this->level->getBlockIdAt($x-1, $y-3, $z) != 0 OR $this->level->getBlockIdAt($x, $y-3, $z+1) != 0 OR $this->level->getBlockIdAt($x, $y-3, $z-1) != 0) {
-									$randThirdBlock = $this->random->nextRange(0, 1);
-									if ($randThirdBlock == 0) {
-										//Add one block
-										$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-										$this->level->setBlockIdAt($x, $y-1, $z, $randomBlock["blockID"], false, false);
-										$this->level->setBlockDataAt($x, $y-1, $z, $randomBlock["blockData"], false, false);
+									//elseif Is there any block at y-2 arround ?
+									elseif (($this->level->getBlockIdAt($x+1, $y-2, $z) != 0 OR $this->level->getBlockIdAt($x-1, $y-2, $z) != 0 OR $this->level->getBlockIdAt($x, $y-2, $z+1) != 0 OR $this->level->getBlockIdAt($x, $y-2, $z-1) != 0)) {
+										$randSecondBlock = $this->random->nextRange(0, 1);
+										if ($randSecondBlock == 0) {
+											//Add one block
+											$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
+											$this->level->setBlockIdAt($x, $y-1, $z, $randomBlock["blockID"]);
+											$this->level->setBlockDataAt($x, $y-1, $z, $randomBlock["blockData"]);
+										}
 									}
 									else {
-										//Add two block
-										$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-										$this->level->setBlockIdAt($x, $y-1, $z, $randomBlock["blockID"], false, false);
-										$this->level->setBlockDataAt($x, $y-1, $z, $randomBlock["blockData"], false, false);
-										$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-										$this->level->setBlockIdAt($x, $y-2, $z, $randomBlock["blockID"], false, false);
-										$this->level->setBlockDataAt($x, $y-2, $z, $randomBlock["blockData"], false, false);
-									}
-								}
-								//elseif Is there any block at y-2 arround ?
-								elseif (($this->level->getBlockIdAt($x+1, $y-2, $z) != 0 OR $this->level->getBlockIdAt($x-1, $y-2, $z) != 0 OR $this->level->getBlockIdAt($x, $y-2, $z+1) != 0 OR $this->level->getBlockIdAt($x, $y-2, $z-1) != 0)) {
-									$randSecondBlock = $this->random->nextRange(0, 1);
-									if ($randSecondBlock == 0) {
-										//Add one block
-										$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-										$this->level->setBlockIdAt($x, $y-1, $z, $randomBlock["blockID"], false, false);
-										$this->level->setBlockDataAt($x, $y-1, $z, $randomBlock["blockData"], false, false);
-									}
-								}
-								else {
-									$randElseBlock = $this->random->nextRange(0, 1);
-									if ($randElseBlock == 0) {
-										//Add one block
-										$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-										$this->level->setBlockIdAt($x, $y-1, $z, $randomBlock["blockID"], false, false);
-										$this->level->setBlockDataAt($x, $y-1, $z, $randomBlock["blockData"], false, false);
 										$randElseBlock = $this->random->nextRange(0, 1);
 										if ($randElseBlock == 0) {
 											//Add one block
 											$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-											$this->level->setBlockIdAt($x, $y-2, $z, $randomBlock["blockID"], false, false);
-											$this->level->setBlockDataAt($x, $y-2, $z, $randomBlock["blockData"], false, false);
+											$this->level->setBlockIdAt($x, $y-1, $z, $randomBlock["blockID"]);
+											$this->level->setBlockDataAt($x, $y-1, $z, $randomBlock["blockData"]);
 											$randElseBlock = $this->random->nextRange(0, 1);
 											if ($randElseBlock == 0) {
 												//Add one block
 												$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
-												$this->level->setBlockIdAt($x, $y-3, $z, $randomBlock["blockID"], false, false);
-												$this->level->setBlockDataAt($x, $y-3, $z, $randomBlock["blockData"], false, false);
+												$this->level->setBlockIdAt($x, $y-2, $z, $randomBlock["blockID"]);
+												$this->level->setBlockDataAt($x, $y-2, $z, $randomBlock["blockData"]);
+												$randElseBlock = $this->random->nextRange(0, 1);
+												if ($randElseBlock == 0) {
+													//Add one block
+													$randomBlock = $this->selectRandomBlock($currentSphereBlocks);
+													$this->level->setBlockIdAt($x, $y-3, $z, $randomBlock["blockID"]);
+													$this->level->setBlockDataAt($x, $y-3, $z, $randomBlock["blockData"]);
+												}
 											}
 										}
 									}
@@ -586,6 +715,7 @@ class SpheresGenerator extends Generator {
 				}
 			}
 		}
+	return $canSpawn;
 	}
 
 	Public function selectRandomBlock ($currentSphereBlocks) {
@@ -608,5 +738,16 @@ class SpheresGenerator extends Generator {
 		$tmp["blockID"] = 0;
 		$tmp["blockData"] = 0;
 		return $tmp;	
+	}
+	
+	//Ex radius at 3 block  positionIsBetweenRadius(3,3,X)
+	Public function positionIsBetweenRadius (Vector3 $radiusCenterPos, $radiusMin, $radiusMax, $posToCheck) : bool {
+		$radiusSquaredMin = $radiusMin ** 2;
+		$radiusSquaredMax = $radiusMax ** 2;
+		$xsquared = ($radiusCenterPos->x - $posToCheck->x) * ($radiusCenterPos->x - $posToCheck->x);
+		$ysquared = ($radiusCenterPos->y - $posToCheck->y) * ($radiusCenterPos->y - $posToCheck->y);
+		$zsquared = ($radiusCenterPos->z - $posToCheck->z) * ($radiusCenterPos->z - $posToCheck->z);		
+		if ($xsquared + $ysquared + $zsquared >= $radiusSquaredMin AND $xsquared + $ysquared + $zsquared < $radiusSquaredMax ) {return true;}
+		else {return false;}
 	}
 }
